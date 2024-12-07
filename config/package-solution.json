@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "nyc-solution-client-side-solution",
+    "id": "e8cac895-f4b2-476c-bb65-a4739f5a3b67",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.20.0"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "NycSolution description"
+      },
+      "longDescription": {
+        "default": "NycSolution description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "nyc-solution Feature",
+        "description": "The feature that activates elements of the nyc-solution solution.",
+        "id": "d6c12833-7f09-475f-bdf5-a7ba9927488d",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/nyc-solution.sppkg"
+  }
+}
