@@ -2,102 +2,144 @@ import * as React from 'react';
 import { sp } from "@pnp/sp/presets/all"
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
-import { IItem } from "@pnp/sp/items";
-import { WebPartContext } from '@microsoft/sp-webpart-base'
-
-;
+import { ShimmeredDetailsList, DetailsListLayoutMode, SelectionMode, IColumn, Spinner, SpinnerSize, Stack  } from '@fluentui/react';
+//import { DetailsList, DetailsListLayoutMode, SelectionMode, IColumn, Spinner, SpinnerSize, Stack, TextField, PrimaryButton } from '@fluentui/react';
+import {IDDCApplicationStatusProps} from './IDDCApplicationStatusProps';
+import {IDDCApplicationStatusItem} from './IDDCApplicationStatusItem';
+import styles from './GridComponent.module.scss'; // Add a CSS module for styling
 //import styles from './DDCApplicationStatus.module.scss'; // Assume styling is in this file
 
-interface IDDCApplicationStatusProps {
-  context: WebPartContext;
-}
-interface IDDCApplicationStatusItem { 
-  Id: number; 
-  "Application Name": string; 
-  Status: string; 
-}
-
 interface IDDCApplicationStatusState {
-  items: any[]; // State to store list items
+  items: IDDCApplicationStatusItem[]; // State to store list items
   isLoading: boolean; // State to show a loading spinner
   error: string | null; // State to track errors
   isEditMode: boolean;
-  currentItem: IItem | null;
+  currentItem: IDDCApplicationStatusItem | null;
   applicationName: string;
   status: string;
+  siteUrl: string;
+  successMessage: string;
+  currentPage: number;
+  
 
 }
+// Define the SharePoint list name in a constant 
+const LIST_NAME = "DDC Application Status";
+
 class DDCApplicationStatus extends React.Component<IDDCApplicationStatusProps, IDDCApplicationStatusState,IDDCApplicationStatusItem> {
-  constructor(props: IDDCApplicationStatusProps) {
+  private refreshInterval: number | null = null;
+  private itemsPerPage = 5;
+    constructor(props: IDDCApplicationStatusProps) {
     super(props);
 
     this.state = {
       items: [],
-      isLoading: false,
+      isLoading: true,
       error: null,
       isEditMode: false,
       currentItem: null,
       applicationName: '',
-      status: ''
+      status: '',
+      siteUrl: '',
+      successMessage: '',
+      currentPage: 0,
+
 
     };
 
     this.loadItems = this.loadItems.bind(this);
     this.handleEdit = this.handleEdit.bind(this);
-    // this.handleUpdate = this.handleUpdate.bind(this);
+    this.handleUpdate = this.handleUpdate.bind(this);
     this.handleDelete = this.handleDelete.bind(this);
     this.handleChange = this.handleChange.bind(this);
-
-
+    this.handleCancel = this.handleCancel.bind(this);
   }
 
   componentDidMount(): void {
     //this.fetchItems(); // Fetch data when the component mounts
     this.loadItems();
+    this.refreshInterval = window.setInterval(this.loadItems, 20000);
+  }
+  public componentWillUnmount(): void { 
+    // Clear the interval to avoid memory leaks 
+    if (this.refreshInterval !== null) {
+      window.clearInterval(this.refreshInterval);
+    }
   }
   public async loadItems() {
-    const items: IItem[] = await sp.web.lists.getByTitle("DDC Application Status").items.get();
-    this.setState({ items });
+    try { 
+      const web = await sp.web();
+      const siteUrl = web.Url;
+      const items: IDDCApplicationStatusItem[] = await sp.web.lists.getByTitle(LIST_NAME).items 
+      .select("Id", "Title", "Status","Editor/Title" , "Modified") .expand("Editor")();
+      console.log("Items loaded:", items); 
+      this.setState({ 
+        siteUrl ,
+        items,
+        isLoading: false,
+        error: '' // Clear any previous errors
+       }); 
+    } 
+      catch (error) { 
+        this.setState({
+          items: [],
+          isLoading: false,
+          error: `Error loading items: ${error.message}`
+        });
+        console.error('Error loading items:', error);
+      }
   }
-  public handleEdit(item: IItem) {
+  public handleEdit(item: IDDCApplicationStatusItem) {
     this.setState({ 
       isEditMode: true, 
       currentItem: item, 
-      //applicationName: item["Application Name"], 
-      //status: item["Status"] 
+      applicationName: item["Title"], 
+      status: item["Status"],
+      successMessage: '' // Clear any previous success message
     });
   }
- /*  public async handleUpdate() {
+ public async handleUpdate() {
     const { currentItem, applicationName, status } = this.state;
 
     if (currentItem) {
-      await sp.web.lists.getByTitle("DDC Application Status").items.getById(currentItem.Id).update({
-        "Application Name": applicationName,
+      try {
+        console.log(currentItem.Id,applicationName,status);
+        await sp.web.lists.getByTitle(LIST_NAME).items.getById(currentItem.Id).update({
+        "Title": applicationName,
         "Status": status
       });
       this.setState({ 
         isEditMode: false, 
         currentItem: null, 
         applicationName: '', 
-        status: ''
+        status: '',
+        successMessage: 'Item successfully edited!' // Set success message
       });
-
       this.loadItems();
+    } 
+    catch (error) { console.error("Error updating item:", error); }
     }
-  } */
+  }
   public async handleDelete(itemId: number) {
-    await sp.web.lists.getByTitle("DDC Application Status").items.getById(itemId).delete();
-
+    await sp.web.lists.getByTitle(LIST_NAME).items.getById(itemId).delete();
+    this.setState({
+      successMessage: 'Item successfully deleted!' // Set success message
+      });
     this.loadItems();
   }
   public handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
     this.setState({ [name]: value } as any);
   }
-
-
-
-
+  public handleCancel() { 
+    this.setState({ 
+      isEditMode: false, 
+      currentItem: null, 
+      applicationName: '', 
+      status: '', 
+      successMessage: '' 
+    }); 
+  }
 /*   fetchItems = async (): Promise<void> => {
     this.setState({ isLoading: true, error: null });
 
@@ -110,53 +152,63 @@ class DDCApplicationStatus extends React.Component<IDDCApplicationStatusProps, I
     }
   }; */
   render(): React.ReactElement<IDDCApplicationStatusProps> {
-    const { items, isEditMode, applicationName, status } = this.state;
+    const { items , isLoading } = this.state;
+    const columns: IColumn[] = [ 
+      { key: 'column1', name: 'Application Name', fieldName: 'Title', minWidth: 100, maxWidth: 200, isResizable: true }, 
+      { key: 'column2', name: 'Status', fieldName: 'Status', minWidth: 100, maxWidth: 200, isResizable: true, onRender: this.renderStatusColumn },      
+      { key: 'column4', name: 'Modified By', fieldName: 'Editor', minWidth: 100, maxWidth: 200, isResizable: true, onRender: (item) => item.Editor.Title },
+      { key: 'column3', name: 'Modified', fieldName: 'Modified', minWidth: 100, maxWidth: 200, isResizable: true, onRender: (item) => new Date(item.Modified).toLocaleString() }
+    ];
     return (
-      <div>
-        <h2>DDC Application Status</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Application Name</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map(item => (
-              <tr key={item.Id}>
-                <td>{item["Application Name"]}</td>
-                <td>{item["Status"]}</td>
-                <td>
-                  <button onClick={() => this.handleEdit(item)}>Edit</button>
-                  <button onClick={() => this.handleDelete(item.Id)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {isEditMode && (
-          <div>
-            <h3>Edit Item</h3>
-            <input 
-              type="text" 
-              name="applicationName" 
-              value={applicationName} 
-              onChange={this.handleChange} 
-            />
-            <input 
-              type="text" 
-              name="status" 
-              value={status} 
-              onChange={this.handleChange} 
-            />
-            {/* <button onClick={this.handleUpdate}>Update</button> */}
-          </div>
+      <div className={styles.ddcApplicationStatus}>
+        <Stack 
+          horizontalAlign="start" 
+          styles={{ 
+            root: { 
+              backgroundColor: '#f3f2f1', 
+              padding: '10px 20px', 
+              borderRadius: '4px', 
+              marginBottom: '20px' 
+            } 
+          }} 
+        > 
+          <h2>DDC Application Status</h2> 
+        </Stack>
+        {isLoading ? ( 
+          <Spinner size={SpinnerSize.large} label="Loading items..." /> 
+          ) : ( 
+          <ShimmeredDetailsList 
+            items={items} 
+            columns={columns} 
+            setKey="set" 
+            //layoutMode={DetailsListLayoutMode.justified} 
+            selectionMode={SelectionMode.none} 
+            layoutMode={DetailsListLayoutMode.justified}
+            isHeaderVisible={true}
+            styles={{ root: { overflowX: 'auto' } }} 
+          /> 
         )}
       </div>
 
     );
 
+  }
+  private renderStatusColumn(item: IDDCApplicationStatusItem): JSX.Element { 
+    const statusStyle: { [key: string]: string } = { 
+      UP : styles.activeStatus,
+      Down: styles.pendingStatus,
+      Active: styles.activeStatus, 
+      Inactive: styles.inactiveStatus, 
+      Pending: styles.pendingStatus, 
+      Closed: styles.closedStatus 
+    }; 
+    
+    return ( 
+    //<span className={statusStyle[item.Status] || ''}> 
+    <span className={`${styles.statusCell} ${statusStyle[item.Status] || ''}`}>
+      {item.Status} 
+    </span> 
+    ); 
   }
 }
 export default DDCApplicationStatus;
