@@ -1,0 +1,94 @@
+
+.ddcApplicationStatus {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .table th, .table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .table th {
+    background-color: #f2f2f2;
+  }
+  
+  .table tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  .table tr:hover {
+    background-color: #f1f1f1;
+  }
+  
+  button {
+    background-color: #0078d4;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #005a9e;
+  }
+  
+  input {
+    margin: 4px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+    list-style-type: none;
+  }
+  
+  .pagination li {
+    display: inline;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  
+  .pagination li a {
+    color: #0078d4;
+  }
+  
+  .pagination .active a {
+    font-weight: bold;
+    color: #005a9e;
+  }
+  
+  /* Status styles */
+  .statusCell {
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+  }
+  
+  .activeStatus {
+    background-color: green;
+  }
+  
+  .inactiveStatus {
+    background-color: red;
+  }
+  
+  .pendingStatus {
+    background-color: orange;
+  }
+  
+  .closedStatus {
+    background-color: grey;
+  }
+  
