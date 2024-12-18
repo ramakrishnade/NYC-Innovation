@@ -37,6 +37,7 @@ class DDCApplicationStatus extends React.Component<IDDCApplicationStatusProps, I
 
 
         };
+        this.loadItems = this.loadItems.bind(this);
     }
     componentDidMount(): void {
         //this.fetchItems(); // Fetch data when the component mounts
