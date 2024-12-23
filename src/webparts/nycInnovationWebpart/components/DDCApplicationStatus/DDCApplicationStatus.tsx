@@ -164,7 +164,7 @@ class DDCApplicationStatus extends React.Component<IDDCApplicationStatusProps, I
                     color: 'white'
                     }}
               >
-                    <span>{item.Status}</span>
+                    <span style={{ fontSize: '14px' }}>{item.Status}</span>
                 </div>
                 );
             }
