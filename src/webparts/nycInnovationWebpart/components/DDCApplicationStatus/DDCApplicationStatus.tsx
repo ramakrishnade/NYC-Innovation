@@ -2,7 +2,7 @@ import * as React from 'react';
 import { sp } from "@pnp/sp/presets/all"
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
-import { ShimmeredDetailsList, DetailsListLayoutMode, SelectionMode, IColumn, Spinner, SpinnerSize, Checkbox , Icon} from '@fluentui/react';
+import { ShimmeredDetailsList, DetailsListLayoutMode, SelectionMode, IColumn, Spinner, SpinnerSize} from '@fluentui/react';
 import {IDDCApplicationStatusProps} from './IDDCApplicationStatusProps';
 import {IDDCApplicationStatusItem} from './IDDCApplicationStatusItem';
 import styles from './GridComponent.module.scss'; // Add a CSS module for styling
@@ -52,7 +52,13 @@ class DDCApplicationStatus extends React.Component<IDDCApplicationStatusProps, I
           clearInterval(this.refreshInterval);
         }
     }
+    
       public async loadItems() {
+        /* // Set loading state to true to show the spinner
+        this.setState({
+            isLoading: true,
+            error: null, // Reset the error when trying to load new data
+        }); */
         try { 
           const web = await sp.web();
           const siteUrl = web.Url;
@@ -77,7 +83,7 @@ class DDCApplicationStatus extends React.Component<IDDCApplicationStatusProps, I
           }
       }
       render() {
-        const { items , isLoading } = this.state;
+        const { items , isLoading , error} = this.state;
         const columns: IColumn[] = [ 
             { key: 'column1', name: 'Application Name', fieldName: 'Title', minWidth: 100, maxWidth: 200,isMultiline: true,isResizable: true }, 
             { key: 'column2', name: 'Status', fieldName: 'Status', minWidth: 100, maxWidth: 200, isResizable: true, onRender: this.renderStatusColumn  },      
@@ -88,7 +94,9 @@ class DDCApplicationStatus extends React.Component<IDDCApplicationStatusProps, I
             <div className={styles.ddcApplicationStatus}>
                 {isLoading ? ( 
                     <Spinner size={SpinnerSize.large} label="Loading items..." /> 
-                ) : ( 
+                ) : error ? (
+                  <div style={{ color: 'red' }}>Error: {error}</div>
+                ) :( 
 
                     <ShimmeredDetailsList 
                         items={items} 
@@ -107,7 +115,7 @@ class DDCApplicationStatus extends React.Component<IDDCApplicationStatusProps, I
       }
       private renderStatusColumn(item: IDDCApplicationStatusItem): JSX.Element { 
        
-            if (item.Status.toLocaleLowerCase() === 'up')
+        if (item.Status.toLocaleLowerCase() === 'up' || item.Status.toLocaleLowerCase() === '[up]') 
             {
                 return(
                     <div style={{
@@ -119,14 +127,13 @@ class DDCApplicationStatus extends React.Component<IDDCApplicationStatusProps, I
                         color: 'white',
                         
                       }}>
-                        <Checkbox checked={true} disabled={true} styles={{ root: { color: 'white', backgroundColor:'green' } }} />
-                        <span >
-                            {item.Status}
+                        <span style={{ fontSize: '14px' }}>
+                            {item.Status.replace(/[\[\]]/g, '')}
                         </span>
                     </div>
                 );
             }
-            else if (item.Status.toLocaleLowerCase() === 'down')
+            else if (item.Status.toLocaleLowerCase() === 'down' || item.Status.toLocaleLowerCase() === '[down]')
             {
                 return(
                 <div
@@ -139,8 +146,7 @@ class DDCApplicationStatus extends React.Component<IDDCApplicationStatusProps, I
                   color: 'white'
                 }}
               >
-                <Icon iconName="CircleFill" style={{ color: 'white', fontSize: '20px' }} />
-                 <span style={{ marginLeft: '4px' }}>{item.Status}</span> {/* Text next to the icon */}
+                 <span style={{ fontSize: '14px' }}>{item.Status.replace(/[\[\]]/g, '')}</span> {/* Text next to the icon */}
               </div>
 
                 );
